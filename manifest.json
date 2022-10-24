@@ -3,6 +3,7 @@
     "name": "Rumble Speed",
     "description": "Chrome extension to speed up video in rumble ",
     "version": "0.1",
+    "author": "Willem Allan",
     "action": {
         "default_popup": "index.html"
     },
