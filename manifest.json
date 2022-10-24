@@ -1,0 +1,30 @@
+{
+    "manifest_version": 3,
+    "name": "Rumble Speed",
+    "description": "Chrome extension to speed up video in rumble ",
+    "version": "0.1",
+    "action": {
+        "default_popup": "index.html"
+    },
+    "icons": {
+        "16": "icons/rumble-16.png",
+        "32": "icons/rumble-32.png",
+        "48": "icons/rumble-48.png"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "http://rumble.com/*",
+                "https://rumble.com/*"
+            ],
+            "js": [
+                "js/jquery.js",
+                "js/background.js"
+            ]
+        }
+    ],
+    "permissions": [
+        "activeTab",
+        "storage"
+    ]
+}
