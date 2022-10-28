@@ -1,4 +1,5 @@
 chrome.storage.local.get(['key'], function (result) {
+    $(".video-footer-buttons").append('<span class="rumbles-count">Velocity ' + result.key + '</span>');
 });
 
 jQuery("video").on('play', function () {
