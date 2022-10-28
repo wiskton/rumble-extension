@@ -3,7 +3,12 @@
     "name": "Rumble video accelerator",
     "description": "Extension to speed up video in rumble",
     "version": "0.2",
-    "author": "Willem Allan",
+    "authors": [
+        {
+            "name": "Willem Allan",
+            "url": "https://www.willemallan.com.br"
+        }
+    ],
     "action": {
         "default_popup": "index.html"
     },

@@ -5,6 +5,7 @@ $(document).ready(function () {
             $("#rumble_speed").append('<option value="' + value + '" ' + ((value == result.key) ? 'selected' : '') + ' >' + value + '</option>');
         });
     });
+    
 
     $("#btsend").click(function () {
         const speed = $("#rumble_speed").val();
