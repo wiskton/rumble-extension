@@ -9,7 +9,7 @@
             "strict_min_version": "99.0"
         }
     },
-    "authors": "Willem Allan",
+    "author": "Willem Allan",
     "options_ui": {
         "page": "index.html"
     },
