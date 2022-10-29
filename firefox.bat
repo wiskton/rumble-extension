@@ -1,6 +1,6 @@
 @echo off
 
-set Name=rumble-speed-video-chrome-exntesion
+set Name=rumble-extension
 set Project=%userprofile%\Projects\%Name%
 set Temp=%userprofile%\Projects\temp
 set Seven=C:\Program Files\7-Zip\7z.exe
@@ -11,8 +11,8 @@ xcopy /s /f %Project% %Temp%
 del %Temp%\*.bat
 del %Temp%\LICENSE
 del %Temp%\manifest.json
-del %Temp%\chrome.bat
-del %Temp%\firefox.bat
+del %Temp%\README.md
+del %Temp%\*.bat
 del %Temp%\*.zip
 
 cd %Temp%
@@ -28,7 +28,7 @@ echo %Data%
 
 pushd "%Temp%"
 
-"%Seven%" a -y -tzip "%Temp%\%NTemp% firefox-%Data%.zip" * -x!.git -x!*.bat
+"%Seven%" a -y -tzip "%Temp%\%NTemp% firefox-%Data%.zip" * -x!.git
 
 del /s %Temp%\css
 del /s %Temp%\js 
