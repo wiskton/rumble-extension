@@ -1,0 +1,37 @@
+{
+    "manifest_version": 3,
+    "name": "Rumble video accelerator",
+    "description": "Extension to speed up video in rumble",
+    "version": "0.2",
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "willemarf@gmail.com",
+            "strict_min_version": "99.0"
+        }
+    },
+    "authors": "Willem Allan",
+    "action": {
+        "default_icon": {
+            "16": "icons/rumble-16.png",
+            "32": "icons/rumble-32.png",
+            "48": "icons/rumble-48.png"
+        },
+        "default_popup": "index.html"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "http://rumble.com/*",
+                "https://rumble.com/*"
+            ],
+            "js": [
+                "js/jquery.js",
+                "js/background.js"
+            ]
+        }
+    ],
+    "permissions": [
+        "activeTab",
+        "storage"
+    ]
+}
