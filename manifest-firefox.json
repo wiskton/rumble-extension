@@ -10,13 +10,19 @@
         }
     },
     "author": "Willem Allan",
-    "options_ui": {
-        "page": "index.html"
-    },
     "icons": {
         "16": "icons/rumble-16.png",
         "32": "icons/rumble-32.png",
         "48": "icons/rumble-48.png"
+    },
+    "browser_action": {
+        "browser_style": true,
+        "default_icon": {
+            "16": "icons/rumble-16.png",
+            "32": "icons/rumble-32.png"
+        },
+        "default_title": "Rumble",
+        "default_popup": "index.html"
     },
     "content_scripts": [
         {
@@ -31,7 +37,7 @@
         }
     ],
     "permissions": [
-        "activeTab",
+        "tabs",
         "storage"
     ]
 }
