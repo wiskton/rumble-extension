@@ -2,7 +2,7 @@
 
 Extension to speed up video in rumble
 
-### Browser suport
+### Browser support
 - Firefox
 - Chrome
 - Edge
