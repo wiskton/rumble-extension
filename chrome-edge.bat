@@ -1,8 +1,8 @@
 @echo off
 
 set Name=rumble-extension
-set Project=%userprofile%\Projects\%Name%
-set Temp=%userprofile%\Projects\temp
+set Project=%userprofile%\OneDrive\Documentos\GitHub\%Name%
+set Temp=%userprofile%\OneDrive\Documentos\GitHub\temp
 set Seven=C:\Program Files\7-Zip\7z.exe
 
 cd %%
