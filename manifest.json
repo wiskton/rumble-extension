@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Rumble video accelerator",
     "description": "Extension to speed up video in rumble",
-    "version": "0.2.3",
+    "version": "0.2.4",
     "author": "Willem Allan",
     "action": {
         "default_popup": "index.html"
