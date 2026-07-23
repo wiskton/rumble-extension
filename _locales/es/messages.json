@@ -1,0 +1,50 @@
+{
+  "extName": {
+    "message": "Acelerador de Vídeo de Rumble"
+  },
+  "extDescription": {
+    "message": "Controla la velocidad de reproducción y la resolución de los vídeos en Rumble.com"
+  },
+  "speedLabel": {
+    "message": "Velocidad de reproducción"
+  },
+  "resolutionLabel": {
+    "message": "Resolución del vídeo"
+  },
+  "saveButton": {
+    "message": "Guardar"
+  },
+  "savedMessage": {
+    "message": "¡Configuración guardada!"
+  },
+  "resolutionAuto": {
+    "message": "Automática"
+  },
+  "resolutionHighest": {
+    "message": "Más alta disponible"
+  },
+  "resolutionLowest": {
+    "message": "Más baja disponible"
+  },
+  "badgePrefix": {
+    "message": "Velocidad"
+  },
+  "footerHeart": {
+    "message": "¿Te gusta la extensión? ❤️"
+  },
+  "footerSupportLabel": {
+    "message": "Puedes apoyar donando Bitcoin:"
+  },
+  "footerFollowLabel": {
+    "message": "Sígueme"
+  },
+  "footerCredit": {
+    "message": "Desarrollado por"
+  },
+  "btcCopyTitle": {
+    "message": "Copiar dirección de Bitcoin"
+  },
+  "btcCopied": {
+    "message": "¡Dirección copiada!"
+  }
+}

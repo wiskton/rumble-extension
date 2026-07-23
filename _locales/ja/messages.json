@@ -1,0 +1,50 @@
+{
+  "extName": {
+    "message": "Rumble動画アクセラレーター"
+  },
+  "extDescription": {
+    "message": "Rumble.comで動画の再生速度と解像度を調整します"
+  },
+  "speedLabel": {
+    "message": "再生速度"
+  },
+  "resolutionLabel": {
+    "message": "動画の解像度"
+  },
+  "saveButton": {
+    "message": "保存"
+  },
+  "savedMessage": {
+    "message": "設定を保存しました！"
+  },
+  "resolutionAuto": {
+    "message": "自動"
+  },
+  "resolutionHighest": {
+    "message": "最高画質"
+  },
+  "resolutionLowest": {
+    "message": "最低画質"
+  },
+  "badgePrefix": {
+    "message": "速度"
+  },
+  "footerHeart": {
+    "message": "拡張機能を気に入っていただけましたか？❤️"
+  },
+  "footerSupportLabel": {
+    "message": "ビットコインの寄付でサポートできます:"
+  },
+  "footerFollowLabel": {
+    "message": "フォローする"
+  },
+  "footerCredit": {
+    "message": "開発者:"
+  },
+  "btcCopyTitle": {
+    "message": "ビットコインアドレスをコピー"
+  },
+  "btcCopied": {
+    "message": "アドレスをコピーしました！"
+  }
+}

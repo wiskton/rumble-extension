@@ -2,20 +2,57 @@
 <html>
 
 <head>
-    <title>Rumble Speed</title>
-    <script src='js/jquery.js'></script>
-    <script src='js/content.js'></script>
-    <link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <title>Rumble Video Accelerator</title>
+    <script src="js/common.js?v=0.3.0"></script>
+    <script src="js/popup.js?v=0.3.0"></script>
+    <link rel="stylesheet" href="css/style.css?v=0.3.0">
 </head>
 
 <body>
-    <div>
-        <label>Speed</label>
-    </div>
-    <select id="rumble_speed"></select>
-    <div>
-        <input id='btsend' type='button' value='Save'>
-    </div>
+    <header class="app-header">
+        <img src="icons/rumble-32.png" alt="" class="app-icon">
+        <h1 id="app-title" class="app-title"></h1>
+    </header>
+
+    <main class="app-body">
+        <div class="field">
+            <label id="label-speed" for="rumble_speed"></label>
+            <div class="select-wrap">
+                <select id="rumble_speed"></select>
+            </div>
+        </div>
+
+        <div class="field">
+            <label id="label-resolution" for="rumble_resolution"></label>
+            <div class="select-wrap">
+                <select id="rumble_resolution"></select>
+            </div>
+        </div>
+
+        <button id="btsend" type="button" class="save-button"></button>
+
+        <div id="saved-message" class="saved-message" role="status"></div>
+    </main>
+
+    <footer class="app-footer">
+        <p id="footer-heart" class="footer-heart"></p>
+        <p id="footer-support-label" class="footer-support-label"></p>
+
+        <button type="button" id="btc-copy" class="btc-copy">
+            <code id="btc-address">bc1qrluvyjkatg9lezrxewe2vqh4ew6z9vl7xw0s6k</code>
+        </button>
+        <p id="btc-copied" class="btc-copied"></p>
+
+        <p id="footer-follow-label" class="footer-follow-label"></p>
+        <div class="footer-links">
+            <a href="https://x.com/wiskton" target="_blank" rel="noopener noreferrer">X</a>
+            <a href="https://twitch.tv/wiskton" target="_blank" rel="noopener noreferrer">Twitch</a>
+            <a href="https://kick.com/wiskton" target="_blank" rel="noopener noreferrer">Kick</a>
+        </div>
+
+        <p class="footer-credit"><span id="footer-credit-label"></span> <strong>wiskton</strong></p>
+    </footer>
 </body>
 
 </html>

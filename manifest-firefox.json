@@ -1,8 +1,9 @@
 {
     "manifest_version": 2,
-    "name": "Rumble video accelerator",
-    "description": "Extension to speed up video in rumble",
-    "version": "0.2.4",
+    "name": "__MSG_extName__",
+    "description": "__MSG_extDescription__",
+    "version": "0.3.0",
+    "default_locale": "en",
     "browser_specific_settings": {
         "gecko": {
             "id": "willemarf@gmail.com",
@@ -34,8 +35,8 @@
                 "https://rumble.com/*"
             ],
             "js": [
-                "js/jquery.js",
-                "js/background.js"
+                "js/common.js",
+                "js/inject.js"
             ]
         }
     ],

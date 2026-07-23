@@ -1,0 +1,50 @@
+{
+  "extName": {
+    "message": "Ускоритель видео Rumble"
+  },
+  "extDescription": {
+    "message": "Управляйте скоростью воспроизведения и разрешением видео на Rumble.com"
+  },
+  "speedLabel": {
+    "message": "Скорость воспроизведения"
+  },
+  "resolutionLabel": {
+    "message": "Разрешение видео"
+  },
+  "saveButton": {
+    "message": "Сохранить"
+  },
+  "savedMessage": {
+    "message": "Настройки сохранены!"
+  },
+  "resolutionAuto": {
+    "message": "Автоматически"
+  },
+  "resolutionHighest": {
+    "message": "Максимально доступное"
+  },
+  "resolutionLowest": {
+    "message": "Минимально доступное"
+  },
+  "badgePrefix": {
+    "message": "Скорость"
+  },
+  "footerHeart": {
+    "message": "Нравится расширение? ❤️"
+  },
+  "footerSupportLabel": {
+    "message": "Вы можете поддержать, отправив Bitcoin:"
+  },
+  "footerFollowLabel": {
+    "message": "Подписывайтесь"
+  },
+  "footerCredit": {
+    "message": "Разработано"
+  },
+  "btcCopyTitle": {
+    "message": "Скопировать адрес Bitcoin"
+  },
+  "btcCopied": {
+    "message": "Адрес скопирован!"
+  }
+}
