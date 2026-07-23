@@ -1,9 +1,9 @@
 {
   "extName": {
-    "message": "Rumble動画アクセラレーター"
+    "message": "Rumble Toolkit"
   },
   "extDescription": {
-    "message": "Rumble.comで動画の再生速度と解像度を調整します"
+    "message": "Rumble.comで再生速度と解像度を調整し、動画をダウンロードできます（ライブ配信を除く）"
   },
   "speedLabel": {
     "message": "再生速度"
@@ -46,5 +46,17 @@
   },
   "btcCopied": {
     "message": "アドレスをコピーしました！"
+  },
+  "downloadButton": {
+    "message": "ダウンロード"
+  },
+  "downloadUnavailable": {
+    "message": "この動画はダウンロードできません。"
+  },
+  "downloadFailed": {
+    "message": "ダウンロードに失敗しました。もう一度お試しください。"
+  },
+  "downloadLiveUnavailable": {
+    "message": "ライブ配信はダウンロードできません。"
   }
 }

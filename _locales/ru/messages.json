@@ -1,9 +1,9 @@
 {
   "extName": {
-    "message": "Ускоритель видео Rumble"
+    "message": "Rumble Toolkit"
   },
   "extDescription": {
-    "message": "Управляйте скоростью воспроизведения и разрешением видео на Rumble.com"
+    "message": "Управляйте скоростью воспроизведения и разрешением, а также скачивайте видео (кроме прямых трансляций) на Rumble.com"
   },
   "speedLabel": {
     "message": "Скорость воспроизведения"
@@ -46,5 +46,17 @@
   },
   "btcCopied": {
     "message": "Адрес скопирован!"
+  },
+  "downloadButton": {
+    "message": "Скачать"
+  },
+  "downloadUnavailable": {
+    "message": "Скачивание недоступно для этого видео."
+  },
+  "downloadFailed": {
+    "message": "Не удалось скачать. Попробуйте снова."
+  },
+  "downloadLiveUnavailable": {
+    "message": "Скачивание недоступно для прямых трансляций."
   }
 }

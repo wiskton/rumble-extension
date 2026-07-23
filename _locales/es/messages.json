@@ -1,9 +1,9 @@
 {
   "extName": {
-    "message": "Acelerador de Vídeo de Rumble"
+    "message": "Rumble Toolkit"
   },
   "extDescription": {
-    "message": "Controla la velocidad de reproducción y la resolución de los vídeos en Rumble.com"
+    "message": "Controla la velocidad de reproducción y la resolución, y descarga vídeos (no transmisiones en directo) en Rumble.com"
   },
   "speedLabel": {
     "message": "Velocidad de reproducción"
@@ -46,5 +46,17 @@
   },
   "btcCopied": {
     "message": "¡Dirección copiada!"
+  },
+  "downloadButton": {
+    "message": "Descargar"
+  },
+  "downloadUnavailable": {
+    "message": "Descarga no disponible para este vídeo."
+  },
+  "downloadFailed": {
+    "message": "Error al descargar. Inténtalo de nuevo."
+  },
+  "downloadLiveUnavailable": {
+    "message": "Descarga no disponible para transmisiones en directo."
   }
 }

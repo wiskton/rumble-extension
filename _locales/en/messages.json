@@ -1,9 +1,9 @@
 {
   "extName": {
-    "message": "Rumble Video Accelerator"
+    "message": "Rumble Toolkit"
   },
   "extDescription": {
-    "message": "Control playback speed and video resolution on Rumble.com"
+    "message": "Control playback speed and video resolution, and download videos (not live streams) on Rumble.com"
   },
   "speedLabel": {
     "message": "Playback speed"
@@ -46,5 +46,17 @@
   },
   "btcCopied": {
     "message": "Address copied!"
+  },
+  "downloadButton": {
+    "message": "Download"
+  },
+  "downloadUnavailable": {
+    "message": "Download not available for this video."
+  },
+  "downloadFailed": {
+    "message": "Download failed. Please try again."
+  },
+  "downloadLiveUnavailable": {
+    "message": "Download unavailable for live streams."
   }
 }

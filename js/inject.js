@@ -252,9 +252,232 @@
         return settings.speed + "|" + settings.resolution;
     }
 
+    // --- Download button -------------------------------------------------
+    // Rumble has no "download" action of its own. Rather than guessing at
+    // markup, this button is built using the exact classes Rumble itself
+    // uses for its action-row buttons (".round-button.media-by-actions-button",
+    // taken from inspecting the real "Comentários" button), so it matches
+    // the site's current look without any custom CSS here. It's inserted
+    // right after the channel's Follow button (".js-media-subscribe" - a
+    // functional JS-hook class, which tends to be far more stable across
+    // redesigns than styling class names).
+    //
+    // content scripts have no access to chrome.downloads directly, so the
+    // actual download is requested from the background script.
+
+    var FOLLOW_BUTTON_SELECTOR = ".js-media-subscribe";
+    // Shorts uses a completely different component (a vertical action rail
+    // of <span class="rum-shorts__screen__action">, each wrapping a custom
+    // <rum-icon name="...">) instead of the watch page's Follow/action-row
+    // buttons. The rum-icon's "name" attribute is what actually identifies
+    // which action a given item is - "data-vote" looked promising at first
+    // but turned out to be shared by both Like and Dislike (both read
+    // data-vote="false" until the viewer actually votes), which duplicated
+    // the download button. "shorts__comments" is unique to Comments.
+    var SHORTS_COMMENTS_ICON_SELECTOR = 'rum-icon[name="shorts__comments"]';
+    var SHORTS_ACTION_CLASS = "rum-shorts__screen__action";
+    var DOWNLOAD_BUTTON_CLASS = "rumble-ext-download-btn";
+
+    // On a normal watch page there is exactly one Follow button and one
+    // <video> on the whole page. On the Shorts feed, though, many cards
+    // (each with their own action rail and <video>) are mounted at once,
+    // so every download button needs to be tied to *its own* card's video,
+    // not just "whatever <video> is on the page". downloadButtonAnchors
+    // maps each inserted button to the original page element it was
+    // anchored next to (Follow button / Like action); findCardScope then
+    // walks up from that anchor to the nearest ancestor containing a
+    // <video> - the smallest card-like wrapper around it. The scope is
+    // resolved fresh every time (not cached) because Shorts cards can
+    // mount their <video> lazily, after the button itself was inserted.
+    var downloadButtonAnchors = new WeakMap();
+
+    function findCardScope(anchorEl) {
+        var el = anchorEl.parentElement;
+        for (var i = 0; i < 20 && el; i++) {
+            if (el.querySelector("video")) return el;
+            el = el.parentElement;
+        }
+        return document;
+    }
+
+    function resolveDownloadScope(button) {
+        var anchor = downloadButtonAnchors.get(button);
+        return anchor ? findCardScope(anchor) : document;
+    }
+
+    function buildDownloadButton() {
+        var button = document.createElement("button");
+        button.type = "button";
+        button.className = "round-button media-by-actions-button " + DOWNLOAD_BUTTON_CLASS;
+
+        var label = chrome.i18n.getMessage("downloadButton") || "Download";
+        button.title = label;
+
+        var svgNS = "http://www.w3.org/2000/svg";
+        var svg = document.createElementNS(svgNS, "svg");
+        svg.setAttribute("width", "16");
+        svg.setAttribute("height", "16");
+        svg.setAttribute("viewBox", "0 0 16 16");
+        svg.setAttribute("fill", "none");
+        svg.setAttribute("stroke", "currentColor");
+        svg.setAttribute("stroke-width", "1.5");
+        svg.setAttribute("stroke-linecap", "round");
+        svg.setAttribute("stroke-linejoin", "round");
+        var path = document.createElementNS(svgNS, "path");
+        path.setAttribute("d", "M8 2V10M8 10L11 7M8 10L5 7M3 13H13");
+        svg.appendChild(path);
+
+        button.appendChild(svg);
+        button.appendChild(document.createTextNode(label));
+        button.addEventListener("click", handleDownloadClick, true);
+        return button;
+    }
+
+    // Icon-only counterpart for the Shorts action rail - a <button> would
+    // not match that rail's layout, so this mirrors the shape of a
+    // ".rum-shorts__screen__action" item (span + inline SVG) instead. Size
+    // and centering are set explicitly since the original relies on a
+    // build-hashed class for that, which can't be reused here. A square
+    // 24x24 viewBox (matching the explicit width/height) keeps the icon
+    // from being stretched, unlike the mismatched 16x17 one used earlier.
+    function buildShortsDownloadAction() {
+        var action = document.createElement("span");
+        action.className = "rum-shorts__screen__action " + DOWNLOAD_BUTTON_CLASS;
+        action.setAttribute("role", "button");
+        action.tabIndex = 0;
+        action.style.cursor = "pointer";
+        action.style.display = "flex";
+        action.style.alignItems = "center";
+        action.style.justifyContent = "center";
+        action.style.width = "36px";
+        action.style.height = "36px";
+        action.style.borderRadius = "50%";
+        action.style.background = "#22c55e"; // same accent green used in the popup UI
+        action.style.color = "#fff";
+        action.style.margin = "4px 0";
+        action.title = chrome.i18n.getMessage("downloadButton") || "Download";
+
+        var svgNS = "http://www.w3.org/2000/svg";
+        var svg = document.createElementNS(svgNS, "svg");
+        svg.setAttribute("width", "24");
+        svg.setAttribute("height", "24");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        svg.setAttribute("fill", "none");
+        svg.setAttribute("stroke", "currentColor");
+        svg.setAttribute("stroke-width", "2");
+        svg.setAttribute("stroke-linecap", "round");
+        svg.setAttribute("stroke-linejoin", "round");
+        svg.style.color = "currentColor";
+        var path = document.createElementNS(svgNS, "path");
+        path.setAttribute("d", "M12 3V15M12 15L8 11M12 15L16 11M4 21H20");
+        svg.appendChild(path);
+        action.appendChild(svg);
+
+        action.addEventListener("click", handleDownloadClick, true);
+        return action;
+    }
+
+    // Single source of truth for "is there an actual file behind this
+    // <video> to download": live streams report an Infinity (or, before
+    // metadata loads, NaN) duration, and both live streams and archived
+    // replays of a live are served as blob: (MediaSource/HLS), which
+    // points at a MediaSource object rather than a real file. A regular
+    // VOD has a finite duration and a plain, direct currentSrc.
+    function isDownloadableVideo(video) {
+        if (!video || !isFinite(video.duration)) return false;
+        var src = video.currentSrc || video.src || "";
+        return src !== "" && src.indexOf("blob:") !== 0;
+    }
+
+    function currentVideoDownloadUrl(scope) {
+        var video = (scope || document).querySelector("video");
+        return isDownloadableVideo(video) ? (video.currentSrc || video.src) : "";
+    }
+
+    // Hidden entirely (not just disabled) whenever there's nothing
+    // downloadable, so it never shows up on lives or live replays -
+    // checked per-button, against that button's own card scope.
+    function updateAllDownloadButtonsState() {
+        var buttons = document.querySelectorAll("." + DOWNLOAD_BUTTON_CLASS);
+        for (var i = 0; i < buttons.length; i++) {
+            var button = buttons[i];
+            var scope = resolveDownloadScope(button);
+            var downloadable = isDownloadableVideo(scope.querySelector("video"));
+            button.style.display = downloadable ? "" : "none";
+            button.disabled = !downloadable;
+        }
+    }
+
+    function sanitizeFilename(name) {
+        var cleaned = (name || "").replace(/\s*-\s*Rumble\s*$/i, "").trim();
+        cleaned = cleaned.replace(/[\\/:*?"<>|]+/g, "_").slice(0, 150);
+        return cleaned || "rumble-video";
+    }
+
+    function guessExtension(url) {
+        var match = /\.([a-z0-9]{2,4})(?:\?|#|$)/i.exec(url || "");
+        return match ? match[1] : "mp4";
+    }
+
+    function handleDownloadClick(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        var button = event.currentTarget;
+        if (button.disabled || button.dataset.rumbleDownloading === "1") return;
+
+        var scope = resolveDownloadScope(button);
+        var url = currentVideoDownloadUrl(scope);
+        if (!url) {
+            debugLog("download: no direct video URL available");
+            window.alert(chrome.i18n.getMessage("downloadUnavailable"));
+            return;
+        }
+
+        var filename = sanitizeFilename(document.title) + "." + guessExtension(url);
+        button.dataset.rumbleDownloading = "1";
+        button.style.opacity = "0.6";
+
+        chrome.runtime.sendMessage({ type: "rumbleDownloadVideo", url: url, filename: filename }, function (response) {
+            button.dataset.rumbleDownloading = "0";
+            button.style.opacity = "";
+            if (chrome.runtime.lastError || !response || !response.ok) {
+                debugLog("download failed", chrome.runtime.lastError, response);
+                window.alert(chrome.i18n.getMessage("downloadFailed"));
+            }
+        });
+    }
+
+    function insertDownloadButtons() {
+        var followBtns = document.querySelectorAll(FOLLOW_BUTTON_SELECTOR);
+        for (var i = 0; i < followBtns.length; i++) {
+            var followBtn = followBtns[i];
+            if (followBtn.dataset.rumbleDownloadAttached === "1" || !followBtn.parentNode) continue;
+
+            followBtn.dataset.rumbleDownloadAttached = "1";
+            var button = buildDownloadButton();
+            downloadButtonAnchors.set(button, followBtn);
+            followBtn.parentNode.insertBefore(button, followBtn.nextSibling);
+        }
+
+        var commentIcons = document.querySelectorAll(SHORTS_COMMENTS_ICON_SELECTOR);
+        for (var j = 0; j < commentIcons.length; j++) {
+            var commentsAction = commentIcons[j].closest("." + SHORTS_ACTION_CLASS);
+            if (!commentsAction || commentsAction.dataset.rumbleDownloadAttached === "1" || !commentsAction.parentNode) continue;
+
+            commentsAction.dataset.rumbleDownloadAttached = "1";
+            var shortsAction = buildShortsDownloadAction();
+            downloadButtonAnchors.set(shortsAction, commentsAction);
+            commentsAction.parentNode.insertBefore(shortsAction, commentsAction);
+        }
+
+        updateAllDownloadButtonsState();
+    }
+
     function handleVideoReady(video) {
         applySpeed(video);
         insertOrUpdateBadge();
+        insertDownloadButtons();
 
         var srcKey = video.currentSrc || video.src || "";
         var signature = srcKey + "::" + settingsSignature(currentSettings);
@@ -282,11 +505,13 @@
     document.addEventListener("loadedmetadata", function (event) {
         if (event.target && event.target.tagName === "VIDEO") {
             applySpeed(event.target);
+            updateAllDownloadButtonsState();
         }
     }, true);
 
     var syncWithPage = rumbleDebounce(function () {
         insertOrUpdateBadge();
+        insertDownloadButtons();
         var video = document.querySelector("video");
         if (video && !video.paused) {
             handleVideoReady(video);
@@ -304,6 +529,7 @@
                 var video = document.querySelector("video");
                 if (video) handleVideoReady(video);
                 insertOrUpdateBadge();
+                insertDownloadButtons();
             });
         });
     }
@@ -311,6 +537,7 @@
     rumbleGetSettings(function (settings) {
         currentSettings = settings;
         insertOrUpdateBadge();
+        insertDownloadButtons();
         var video = document.querySelector("video");
         if (video) applySpeed(video);
     });

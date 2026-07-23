@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "__MSG_extName__",
     "description": "__MSG_extDescription__",
-    "version": "0.3.1",
+    "version": "1.0.0",
     "default_locale": "en",
     "browser_specific_settings": {
         "gecko": {
@@ -16,6 +16,9 @@
         "32": "icons/rumble-32.png",
         "64": "icons/rumble-64.png",
         "128": "icons/rumble-128.png"
+    },
+    "background": {
+        "scripts": ["js/background.js"]
     },
     "browser_action": {
         "browser_style": true,
@@ -41,6 +44,7 @@
         }
     ],
     "permissions": [
-        "storage"
+        "storage",
+        "downloads"
     ]
 }
