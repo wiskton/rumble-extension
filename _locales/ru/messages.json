@@ -5,8 +5,14 @@
   "extDescription": {
     "message": "Управляйте скоростью воспроизведения и разрешением, а также скачивайте видео (кроме прямых трансляций) на Rumble.com"
   },
+  "playbackFeatureLabel": {
+    "message": "Скорость и громкость"
+  },
   "speedLabel": {
     "message": "Скорость воспроизведения"
+  },
+  "volumeLabel": {
+    "message": "Усиление громкости"
   },
   "resolutionLabel": {
     "message": "Разрешение видео"

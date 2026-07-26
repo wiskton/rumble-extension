@@ -5,8 +5,14 @@
   "extDescription": {
     "message": "Controle a velocidade de reprodução e a resolução, e baixe vídeos (exceto lives) no Rumble.com"
   },
+  "playbackFeatureLabel": {
+    "message": "Velocidade e Volume"
+  },
   "speedLabel": {
     "message": "Velocidade de reprodução"
+  },
+  "volumeLabel": {
+    "message": "Ganho de volume"
   },
   "resolutionLabel": {
     "message": "Resolução do vídeo"

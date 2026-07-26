@@ -5,8 +5,14 @@
   "extDescription": {
     "message": "Controla la velocidad de reproducción y la resolución, y descarga vídeos (no transmisiones en directo) en Rumble.com"
   },
+  "playbackFeatureLabel": {
+    "message": "Velocidad y Volumen"
+  },
   "speedLabel": {
     "message": "Velocidad de reproducción"
+  },
+  "volumeLabel": {
+    "message": "Ganancia de volumen"
   },
   "resolutionLabel": {
     "message": "Resolución del vídeo"

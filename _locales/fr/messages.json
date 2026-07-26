@@ -5,8 +5,14 @@
   "extDescription": {
     "message": "Contrôlez la vitesse de lecture et la résolution, et téléchargez des vidéos (hors direct) sur Rumble.com"
   },
+  "playbackFeatureLabel": {
+    "message": "Vitesse et Volume"
+  },
   "speedLabel": {
     "message": "Vitesse de lecture"
+  },
+  "volumeLabel": {
+    "message": "Gain de volume"
   },
   "resolutionLabel": {
     "message": "Résolution vidéo"

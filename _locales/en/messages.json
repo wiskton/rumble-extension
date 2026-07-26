@@ -5,8 +5,14 @@
   "extDescription": {
     "message": "Control playback speed and video resolution, and download videos (not live streams) on Rumble.com"
   },
+  "playbackFeatureLabel": {
+    "message": "Speed & Volume"
+  },
   "speedLabel": {
     "message": "Playback speed"
+  },
+  "volumeLabel": {
+    "message": "Volume gain"
   },
   "resolutionLabel": {
     "message": "Video resolution"

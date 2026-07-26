@@ -5,8 +5,14 @@
   "extDescription": {
     "message": "Rumble.comで再生速度と解像度を調整し、動画をダウンロードできます（ライブ配信を除く）"
   },
+  "playbackFeatureLabel": {
+    "message": "速度と音量"
+  },
   "speedLabel": {
     "message": "再生速度"
+  },
+  "volumeLabel": {
+    "message": "音量ブースト"
   },
   "resolutionLabel": {
     "message": "動画の解像度"

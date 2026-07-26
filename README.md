@@ -4,11 +4,12 @@ Browser extension to control **playback speed** and **video resolution**, and **
 
 ## Features
 
-- Set a custom playback speed (0.5x to 3x) that is automatically applied to every Rumble video you watch.
+- Set a custom playback speed (0x to 10x, in 0.25 steps) and a volume gain (0% to 300%, boosting past 100% via a Web Audio gain node since a plain `<video>` can't go louder than its original volume) via sliders, automatically applied to every Rumble video you watch — with a single toggle to turn both off at once.
 - Force a preferred video resolution (Auto, Highest available, Lowest available, or a specific target like 1080p/720p/480p/360p/240p) — useful on slow connections or to save data.
 - Download button to save the video file directly — next to the channel's Follow button on a regular watch page, and next to the Comments action on the Shorts feed. Only shown for regular videos (VOD): live streams and live replays have no downloadable file behind them (they're served as a MediaSource/HLS stream), so the button stays hidden for those.
 - Works across Rumble's single-page navigation: settings keep applying as you move from video to video without reloading the page.
 - Small speed indicator shown under the player.
+- Current speed shown as a badge on the extension's toolbar icon, kept in sync as soon as you save a new value in the popup.
 - Interface localized in: English, Português (Brasil), Español, 日本語, Русский and Français — automatically matches your browser's language, with English as fallback.
 
 ## Browser support
@@ -36,13 +37,20 @@ Rumble has no "download" action of its own, so the button is inserted next to an
 
 A video is only considered downloadable if its `duration` is finite (live streams report `Infinity`/`NaN`) and its `currentSrc` isn't a `blob:` URL (live streams and live replays are served as MediaSource/HLS, which has no real file behind it). If Rumble changes this markup, the button may stop appearing in one of these two places — it fails silently rather than throwing.
 
+## Permissions used
+
+- `storage` — saves your speed/resolution preferences (`chrome.storage.local`) so they apply automatically on every video, and reads them back to update the toolbar badge and popup.
+- `downloads` — lets the download button save a video file to disk (`chrome.downloads.download()`), triggered only by an explicit click on that button; never used in the background.
+
+No host permissions are requested beyond the `rumble.com` content script match — the extension can't read or run on any other site.
+
 ## Contributing translations
 
 Translations live under `_locales/<locale>/messages.json` (one folder per language, using [Chrome's locale codes](https://developer.chrome.com/docs/extensions/reference/i18n/#locales)). Pull requests adding or improving a language are welcome.
 
 ## Building release packages
 
-Run `chrome-edge.bat` or `firefox.bat` (Windows) — they call `build.ps1`, which packages the extension with the right manifest for each target and outputs a versioned zip under `dist/` (e.g. `dist/rumble-extension-chrome-1.0.0.zip`), ready to upload to the Chrome Web Store, Edge Add-ons, or Firefox Add-ons (AMO). No extra tools required (uses .NET's built-in zip APIs, with forward-slash paths so the archive extracts correctly on the stores' backends).
+Run `chrome-edge.bat` or `firefox.bat` (Windows) — they call `build.ps1`, which packages the extension with the right manifest for each target and outputs a versioned zip under `dist/` (e.g. `dist/rumble-extension-chrome-1.1.0.zip`), ready to upload to the Chrome Web Store, Edge Add-ons, or Firefox Add-ons (AMO). No extra tools required (uses .NET's built-in zip APIs, with forward-slash paths so the archive extracts correctly on the stores' backends).
 
 ---
 

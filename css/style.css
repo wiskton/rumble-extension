@@ -16,7 +16,7 @@
 
 body {
     margin: 0;
-    width: 260px;
+    width: 320px;
     background: linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
     color: var(--text);
     font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
@@ -26,7 +26,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 14px 16px;
+    padding: 11px 18px;
     border-bottom: 1px solid var(--surface-border);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
 }
@@ -38,17 +38,17 @@ body {
 
 .app-title {
     margin: 0;
-    font-size: 14px;
+    font-size: 14.5px;
     font-weight: 600;
     letter-spacing: 0.2px;
 }
 
 .app-body {
-    padding: 14px 16px 16px;
+    padding: 13px 18px;
 }
 
 .field {
-    margin-bottom: 14px;
+    margin-bottom: 11px;
 }
 
 .field label {
@@ -59,6 +59,174 @@ body {
     letter-spacing: 0.5px;
     color: var(--text-muted);
     margin-bottom: 6px;
+}
+
+.field-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.field-header label {
+    margin-bottom: 0;
+}
+
+.playback-feature {
+    margin-bottom: 13px;
+}
+
+.speed-feature-header {
+    margin-bottom: 9px;
+}
+
+.field-sublabel {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.field-sublabel.with-gap {
+    margin-top: 10px;
+}
+
+.speed-feature-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.speed-feature-icon {
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.speed-feature-title label {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--text);
+}
+
+.toggle {
+    position: relative;
+    display: inline-block;
+    flex-shrink: 0;
+    cursor: pointer;
+    vertical-align: middle;
+    line-height: 0;
+}
+
+.toggle input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.toggle-track {
+    display: inline-block;
+    position: relative;
+    width: 34px;
+    height: 20px;
+    background: var(--surface-border);
+    border-radius: 999px;
+    vertical-align: middle;
+    transition: background-color 0.15s ease;
+}
+
+.toggle-track::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.toggle input:checked + .toggle-track {
+    background: var(--accent-strong);
+}
+
+.toggle input:checked + .toggle-track::before {
+    transform: translateX(14px);
+    background: #fff;
+}
+
+.toggle input:focus-visible + .toggle-track {
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.25);
+}
+
+.toggle-lg .toggle-track {
+    width: 42px;
+    height: 24px;
+}
+
+.toggle-lg .toggle-track::before {
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+}
+
+.toggle-lg input:checked + .toggle-track::before {
+    transform: translateX(18px);
+}
+
+.speed-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: opacity 0.15s ease;
+}
+
+.playback-control.is-disabled {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+input[type="range"] {
+    flex: 1 1 auto;
+    accent-color: var(--accent-strong);
+    cursor: pointer;
+}
+
+.speed-value-box {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    background-color: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: 9px;
+    padding: 8px 10px;
+}
+
+.speed-value-box input[type="number"] {
+    width: 28px;
+    border: none;
+    background: none;
+    color: var(--text);
+    font-size: 13px;
+    text-align: right;
+    padding: 0;
+    -moz-appearance: textfield;
+}
+
+.speed-value-box input[type="number"]::-webkit-inner-spin-button,
+.speed-value-box input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.speed-unit {
+    font-size: 12px;
+    color: var(--text-muted);
 }
 
 .select-wrap {
@@ -72,12 +240,12 @@ select {
     background-color: var(--surface);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%239aa1ab' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7.5l5 5 5-5'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 10px center;
+    background-position: right 12px center;
     background-size: 16px;
     border: 1px solid var(--surface-border);
-    border-radius: 8px;
+    border-radius: 9px;
     color: var(--text);
-    padding: 9px 34px 9px 12px;
+    padding: 10px 34px 10px 13px;
     font-size: 13px;
     cursor: pointer;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -96,13 +264,14 @@ select:focus {
 .save-button {
     width: 100%;
     border: none;
-    border-radius: 8px;
+    border-radius: 9px;
     padding: 10px;
     margin-top: 4px;
     font-size: 13px;
     font-weight: 600;
     color: var(--accent-contrast);
     background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    box-shadow: 0 6px 14px rgba(34, 197, 94, 0.2);
     cursor: pointer;
     transition: transform 0.1s ease, filter 0.15s ease;
 }
@@ -116,7 +285,7 @@ select:focus {
 }
 
 .saved-message {
-    margin-top: 10px;
+    margin-top: 6px;
     text-align: center;
     font-size: 12px;
     font-weight: 500;
@@ -133,38 +302,32 @@ select:focus {
 }
 
 .app-footer {
-    padding: 12px 16px 14px;
+    padding: 12px 18px 14px;
     border-top: 1px solid var(--surface-border);
     text-align: center;
 }
 
-.app-footer p {
-    margin: 0;
-}
-
 .footer-heart {
-    font-size: 12px;
+    margin: 0 0 3px;
+    font-size: 12.5px;
     font-weight: 600;
-    margin-bottom: 6px;
 }
 
-.footer-support-label,
-.footer-follow-label {
+.footer-support-label {
+    margin: 0 0 6px;
     font-size: 11px;
     color: var(--text-muted);
-    margin-bottom: 6px;
-}
-
-.footer-follow-label {
-    margin-top: 12px;
 }
 
 .btc-copy {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     width: 100%;
     background-color: var(--surface);
-    border: 1px dashed var(--surface-border);
-    border-radius: 8px;
-    padding: 7px 8px;
+    border: 1px solid var(--surface-border);
+    border-radius: 9px;
+    padding: 8px 13px;
     cursor: pointer;
     transition: border-color 0.15s ease, background-color 0.15s ease;
 }
@@ -175,18 +338,31 @@ select:focus {
 }
 
 .btc-copy code {
-    display: block;
-    font-size: 10px;
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: left;
+    font-size: 11px;
     color: var(--text);
-    word-break: break-all;
-    white-space: normal;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.btc-copy-icon {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    transition: color 0.15s ease;
+}
+
+.btc-copy:hover .btc-copy-icon {
+    color: var(--accent);
 }
 
 .btc-copied {
+    margin: 4px 0 0;
     font-size: 11px;
     color: var(--accent);
     height: 14px;
-    margin-top: 4px;
     opacity: 0;
     transition: opacity 0.2s ease;
 }
@@ -195,26 +371,44 @@ select:focus {
     opacity: 1;
 }
 
+.footer-divider {
+    height: 1px;
+    background: var(--surface-border);
+    margin: 10px 0 9px;
+}
+
+.footer-follow-label {
+    margin: 0 0 7px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
 .footer-links {
     display: flex;
     justify-content: center;
-    gap: 14px;
+    gap: 8px;
 }
 
 .footer-links a {
     font-size: 11px;
     font-weight: 600;
-    color: var(--accent);
+    color: var(--text);
     text-decoration: none;
+    padding: 6px 13px;
+    border: 1px solid var(--surface-border);
+    border-radius: 999px;
+    transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 }
 
 .footer-links a:hover {
-    text-decoration: underline;
+    border-color: var(--accent);
+    color: var(--accent);
+    background-color: rgba(74, 222, 128, 0.08);
 }
 
 .footer-credit {
-    margin-top: 12px;
-    font-size: 10px;
+    margin: 10px 0 0;
+    font-size: 10.5px;
     color: var(--text-muted);
 }
 

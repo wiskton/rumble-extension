@@ -13,7 +13,12 @@
     var currentSettings = RUMBLE_DEFAULT_SETTINGS;
 
     function formatBadgeText(settings) {
-        return chrome.i18n.getMessage("badgePrefix") + ": " + settings.speed + "x";
+        var text = chrome.i18n.getMessage("badgePrefix") + ": " + settings.speed + "x";
+        var volume = Number(settings.volume);
+        if (volume && volume !== 100) {
+            text += " · " + volume + "%";
+        }
+        return text;
     }
 
     function insertOrUpdateBadge() {
@@ -21,6 +26,10 @@
         if (!container) return;
 
         var badge = container.querySelector(".rumbles-count");
+        if (!currentSettings.playbackEnabled) {
+            if (badge) badge.remove();
+            return;
+        }
         if (!badge) {
             badge = document.createElement("span");
             badge.className = "rumbles-count";
@@ -31,8 +40,73 @@
 
     function applySpeed(video) {
         if (!video) return;
+        if (!currentSettings.playbackEnabled) {
+            video.playbackRate = 1;
+            return;
+        }
         var speed = Number(currentSettings.speed);
         video.playbackRate = (!speed || isNaN(speed) || speed <= 0) ? 1 : speed;
+    }
+
+    // --- Volume gain ---------------------------------------------------
+    // A plain <video>.volume only ever attenuates (0-1); it cannot boost
+    // audio past its original loudness. Going above 100% requires routing
+    // the element's audio through a Web Audio GainNode instead. That
+    // routing is only set up the first time a given video is actually
+    // boosted past 100%, and reused afterwards (createMediaElementSource
+    // can only ever be called once per <video>, and doing it unconditionally
+    // would also pointlessly detour normal-volume playback through
+    // Web Audio for every single video).
+    var videoGainNodes = new WeakMap();
+
+    function getOrCreateGainNode(video) {
+        var existing = videoGainNodes.get(video);
+        if (existing) return existing;
+
+        try {
+            var AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+            var context = new AudioContextCtor();
+            var source = context.createMediaElementSource(video);
+            var gainNode = context.createGain();
+            source.connect(gainNode);
+            gainNode.connect(context.destination);
+
+            var nodes = { context: context, gainNode: gainNode };
+            videoGainNodes.set(video, nodes);
+            return nodes;
+        } catch (e) {
+            debugLog("volume: could not set up a Web Audio gain node", e);
+            return null;
+        }
+    }
+
+    function applyVolume(video) {
+        if (!video) return;
+        if (!currentSettings.playbackEnabled) {
+            video.volume = 1;
+            var neutral = videoGainNodes.get(video);
+            if (neutral) neutral.gainNode.gain.value = 1;
+            return;
+        }
+
+        var percent = Number(currentSettings.volume);
+        if (!percent || isNaN(percent) || percent < 0) percent = 100;
+
+        if (percent <= 100) {
+            // Plain attenuation - no need to touch Web Audio at all.
+            var existing = videoGainNodes.get(video);
+            if (existing) existing.gainNode.gain.value = 1;
+            video.volume = percent / 100;
+            return;
+        }
+
+        // Boosting past 100% needs the gain node - native volume caps at 1.
+        video.volume = 1;
+        var nodes = getOrCreateGainNode(video);
+        if (nodes) {
+            if (nodes.context.state === "suspended") nodes.context.resume();
+            nodes.gainNode.gain.value = percent / 100;
+        }
     }
 
     // --- Driving Rumble's own settings menu --------------------------------
@@ -249,7 +323,7 @@
     }
 
     function settingsSignature(settings) {
-        return settings.speed + "|" + settings.resolution;
+        return settings.playbackEnabled + "|" + settings.speed + "|" + settings.volume + "|" + settings.resolution;
     }
 
     // --- Download button -------------------------------------------------
@@ -476,6 +550,7 @@
 
     function handleVideoReady(video) {
         applySpeed(video);
+        applyVolume(video);
         insertOrUpdateBadge();
         insertDownloadButtons();
 
@@ -484,7 +559,9 @@
         if (video.dataset.rumbleSyncedFor !== signature) {
             video.dataset.rumbleSyncedFor = signature;
             debugLog("queuing sync for settings", currentSettings);
-            queueMenuTask("speed", currentSettings.speed);
+            if (currentSettings.playbackEnabled) {
+                queueMenuTask("speed", currentSettings.speed);
+            }
             if (currentSettings.resolution !== "auto") {
                 queueMenuTask("quality", currentSettings.resolution);
             }
@@ -505,6 +582,7 @@
     document.addEventListener("loadedmetadata", function (event) {
         if (event.target && event.target.tagName === "VIDEO") {
             applySpeed(event.target);
+            applyVolume(event.target);
             updateAllDownloadButtonsState();
         }
     }, true);
@@ -539,6 +617,9 @@
         insertOrUpdateBadge();
         insertDownloadButtons();
         var video = document.querySelector("video");
-        if (video) applySpeed(video);
+        if (video) {
+            applySpeed(video);
+            applyVolume(video);
+        }
     });
 })();

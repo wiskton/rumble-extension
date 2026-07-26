@@ -4,7 +4,9 @@ document.addEventListener("DOMContentLoaded", function () {
     var extName = chrome.i18n.getMessage("extName");
     document.title = extName;
     document.getElementById("app-title").textContent = extName;
+    document.getElementById("label-playback-feature").textContent = chrome.i18n.getMessage("playbackFeatureLabel");
     document.getElementById("label-speed").textContent = chrome.i18n.getMessage("speedLabel");
+    document.getElementById("label-volume").textContent = chrome.i18n.getMessage("volumeLabel");
     document.getElementById("label-resolution").textContent = chrome.i18n.getMessage("resolutionLabel");
     document.getElementById("btsend").textContent = chrome.i18n.getMessage("saveButton");
     document.getElementById("footer-heart").textContent = chrome.i18n.getMessage("footerHeart");
@@ -12,10 +14,16 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("footer-follow-label").textContent = chrome.i18n.getMessage("footerFollowLabel");
     document.getElementById("footer-credit-label").textContent = chrome.i18n.getMessage("footerCredit");
 
-    var speedSelect = document.getElementById("rumble_speed");
+    var playbackEnabledToggle = document.getElementById("rumble_playback_enabled");
+    var speedSlider = document.getElementById("rumble_speed");
+    var speedValueInput = document.getElementById("rumble_speed_value");
+    var volumeSlider = document.getElementById("rumble_volume");
+    var volumeValueInput = document.getElementById("rumble_volume_value");
     var resolutionSelect = document.getElementById("rumble_resolution");
     var savedMessage = document.getElementById("saved-message");
     var savedMessageTimeoutId = null;
+
+    playbackEnabledToggle.setAttribute("aria-label", chrome.i18n.getMessage("playbackFeatureLabel"));
 
     function resolutionOptionLabel(value) {
         switch (value) {
@@ -26,14 +34,54 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    rumbleGetSettings(function (settings) {
-        RUMBLE_SPEED_OPTIONS.forEach(function (value) {
-            var option = document.createElement("option");
-            option.value = String(value);
-            option.textContent = value + "x";
-            if (value === settings.speed) option.selected = true;
-            speedSelect.appendChild(option);
+    // Keeps a range input and its numeric readout in sync in both
+    // directions (dragging the slider updates the number, typing in the
+    // number moves the slider), shared by the speed and volume controls.
+    function bindSliderPair(slider, numberInput, min, max) {
+        slider.addEventListener("input", function () {
+            numberInput.value = slider.value;
         });
+        numberInput.addEventListener("input", function () {
+            var value = parseFloat(numberInput.value);
+            if (!isNaN(value)) {
+                slider.value = Math.min(max, Math.max(min, value));
+            }
+        });
+    }
+
+    function setPairValue(slider, numberInput, value, fallback, min, max) {
+        var num = Number(value);
+        if (isNaN(num)) num = fallback;
+        num = Math.min(max, Math.max(min, num));
+        slider.value = num;
+        numberInput.value = num;
+    }
+
+    function parsePairValue(numberInput, fallback, min, max) {
+        var num = parseFloat(numberInput.value);
+        if (isNaN(num)) num = fallback;
+        return Math.min(max, Math.max(min, num));
+    }
+
+    function updatePlaybackDisabledState() {
+        var enabled = playbackEnabledToggle.checked;
+        [speedSlider, speedValueInput, volumeSlider, volumeValueInput].forEach(function (el) {
+            el.disabled = !enabled;
+        });
+        document.querySelectorAll(".playback-control").forEach(function (el) {
+            el.classList.toggle("is-disabled", !enabled);
+        });
+    }
+
+    playbackEnabledToggle.addEventListener("change", updatePlaybackDisabledState);
+    bindSliderPair(speedSlider, speedValueInput, 0, 10);
+    bindSliderPair(volumeSlider, volumeValueInput, 0, 300);
+
+    rumbleGetSettings(function (settings) {
+        playbackEnabledToggle.checked = settings.playbackEnabled !== false;
+        setPairValue(speedSlider, speedValueInput, settings.speed, 1, 0, 10);
+        setPairValue(volumeSlider, volumeValueInput, settings.volume, 100, 0, 300);
+        updatePlaybackDisabledState();
 
         RUMBLE_RESOLUTION_OPTIONS.forEach(function (value) {
             var option = document.createElement("option");
@@ -46,7 +94,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.getElementById("btsend").addEventListener("click", function () {
         var settings = {
-            speed: parseFloat(speedSelect.value),
+            speed: parsePairValue(speedValueInput, 1, 0, 10),
+            volume: parsePairValue(volumeValueInput, 100, 0, 300),
+            playbackEnabled: playbackEnabledToggle.checked,
             resolution: resolutionSelect.value
         };
 

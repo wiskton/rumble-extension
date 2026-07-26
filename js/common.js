@@ -6,10 +6,10 @@ var RUMBLE_LEGACY_STORAGE_KEY = "key"; // used by versions <= 0.2.4 (speed only)
 
 var RUMBLE_DEFAULT_SETTINGS = {
     speed: 1,
+    volume: 100,
+    playbackEnabled: true,
     resolution: "auto"
 };
-
-var RUMBLE_SPEED_OPTIONS = [0.5, 0.75, 0.8, 0.85, 0.9, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3];
 
 // "auto"/"highest"/"lowest" are relative to whatever qualities Rumble
 // actually offers for a given video; the numeric entries are common target
