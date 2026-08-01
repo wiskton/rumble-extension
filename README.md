@@ -59,7 +59,7 @@ Run `chrome-edge.bat` or `firefox.bat` (Windows) — they call `build.ps1`, whic
 Você pode apoiar doando Bitcoin:
 
 ```
-bc1qrluvyjkatg9lezrxewe2vqh4ew6z9vl7xw0s6k
+bc1qmzde7n8xm45c03wjsf4nwjsx4p67ynugem9dr4
 ```
 
 **Me siga**
