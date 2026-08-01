@@ -50,7 +50,7 @@ Translations live under `_locales/<locale>/messages.json` (one folder per langua
 
 ## Building release packages
 
-Run `chrome-edge.bat` or `firefox.bat` (Windows) — they call `build.ps1`, which packages the extension with the right manifest for each target and outputs a versioned zip under `dist/` (e.g. `dist/rumble-extension-chrome-1.1.0.zip`), ready to upload to the Chrome Web Store, Edge Add-ons, or Firefox Add-ons (AMO). No extra tools required (uses .NET's built-in zip APIs, with forward-slash paths so the archive extracts correctly on the stores' backends).
+Run `chrome-edge.bat` or `firefox.bat` (Windows) — they call `build.ps1`, which packages the extension with the right manifest for each target and outputs a versioned zip under `dist/` (e.g. `dist/rumble-extension-chrome-1.1.1.zip`), ready to upload to the Chrome Web Store, Edge Add-ons, or Firefox Add-ons (AMO). No extra tools required (uses .NET's built-in zip APIs, with forward-slash paths so the archive extracts correctly on the stores' backends).
 
 ---
 
