@@ -6,7 +6,7 @@ Browser extension to control **playback speed** and **video resolution**, and **
 
 - Set a custom playback speed (0x to 10x, in 0.25 steps) and a volume gain (0% to 300%, boosting past 100% via a Web Audio gain node since a plain `<video>` can't go louder than its original volume) via sliders, automatically applied to every Rumble video you watch — with a single toggle to turn both off at once.
 - Force a preferred video resolution (Auto, Highest available, Lowest available, or a specific target like 1080p/720p/480p/360p/240p) — useful on slow connections or to save data.
-- Download button to save the video file directly — next to the channel's Follow button on a regular watch page, and next to the Comments action on the Shorts feed. Only shown for regular videos (VOD): live streams and live replays have no downloadable file behind them (they're served as a MediaSource/HLS stream), so the button stays hidden for those.
+- Choose the player mode a video loads in: Standard, Theater, or Fullscreen (default: Standard). Theater/fullscreen are applied by clicking Rumble's own on-page controls, so they follow Rumble's own responsive behavior; fullscreen only triggers on the first user play (browser policy). Watch pages only (not Shorts).- Download button to save the video file directly — next to the channel's Follow button on a regular watch page, and next to the Comments action on the Shorts feed. Only shown for regular videos (VOD): live streams and live replays have no downloadable file behind them (they're served as a MediaSource/HLS stream), so the button stays hidden for those.
 - Works across Rumble's single-page navigation: settings keep applying as you move from video to video without reloading the page.
 - Small speed indicator shown under the player.
 - Current speed shown as a badge on the extension's toolbar icon, kept in sync as soon as you save a new value in the popup.
@@ -37,9 +37,18 @@ Rumble has no "download" action of its own, so the button is inserted next to an
 
 A video is only considered downloadable if its `duration` is finite (live streams report `Infinity`/`NaN`) and its `currentSrc` isn't a `blob:` URL (live streams and live replays are served as MediaSource/HLS, which has no real file behind it). If Rumble changes this markup, the button may stop appearing in one of these two places — it fails silently rather than throwing.
 
+## Notes on the player mode
+
+Rumble's player already has its own controls for these modes, so the extension drives them the same way it drives the quality menu — by clicking Rumble's own on-page controls (matched by their `title` attributes), never injecting anything into the page:
+
+- Theater: anchored to `div[title="Toggle theater mode"]`; detected by the `theater-mode` class on `<body>`, so a click is only ever sent when the mode isn't already active, and Rumble's own responsive behavior (it disables theater below 900px) is never fought.
+- Fullscreen: applied through the native fullscreen API on the player element, only from the first user `play` event, since browsers require a user gesture to enter fullscreen.
+
+The Speed/Quality menu sync had to be rebuilt for this: Rumble's current player creates its menu rows when the gear menu is opened and destroys them when it closes (the rows don't persist in the DOM), and the gear's toggle handler is wired to its inner icon wrapper rather than the outer `div[title="Playback settings"]`. The sync therefore opens the gear menu, clicks the matching rows while the panel is hidden (`visibility: hidden` on the panel element, its inline styles restored afterwards), and closes it again — reading the current values from the menu's own section headers ("Speed 2×", "Quality 6.1 mbps") so a redundant click (and the stream reload it causes) never happens. If Rumble changes this markup, the sync fails silently — direct `playbackRate` assignment keeps the speed itself working regardless.
+
 ## Permissions used
 
-- `storage` — saves your speed/resolution preferences (`chrome.storage.local`) so they apply automatically on every video, and reads them back to update the toolbar badge and popup.
+- `storage` — saves your speed/resolution/player-mode preferences (`chrome.storage.local`) so they apply automatically on every video, and reads them back to update the toolbar badge and popup.
 - `downloads` — lets the download button save a video file to disk (`chrome.downloads.download()`), triggered only by an explicit click on that button; never used in the background.
 
 No host permissions are requested beyond the `rumble.com` content script match — the extension can't read or run on any other site.

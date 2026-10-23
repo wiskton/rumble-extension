@@ -32,6 +32,18 @@
   "resolutionLowest": {
     "message": "最低画質"
   },
+  "playerModeLabel": {
+    "message": "Player mode on load"
+  },
+  "playerModeStandard": {
+    "message": "Standard"
+  },
+  "playerModeTheater": {
+    "message": "Theater"
+  },
+  "playerModeFullscreen": {
+    "message": "Fullscreen"
+  },
   "badgePrefix": {
     "message": "速度"
   },

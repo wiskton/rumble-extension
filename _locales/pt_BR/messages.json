@@ -32,6 +32,18 @@
   "resolutionLowest": {
     "message": "Mais baixa disponível"
   },
+  "playerModeLabel": {
+    "message": "Player mode on load"
+  },
+  "playerModeStandard": {
+    "message": "Standard"
+  },
+  "playerModeTheater": {
+    "message": "Theater"
+  },
+  "playerModeFullscreen": {
+    "message": "Fullscreen"
+  },
   "badgePrefix": {
     "message": "Velocidade"
   },

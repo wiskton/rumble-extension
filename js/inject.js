@@ -117,16 +117,24 @@
     // (that one Rumble does not expose through the <video> element at all,
     // it has to be done through its menu).
     //
-    // Inspecting Rumble's actual player showed every Speed/Quality row
-    // always exists in the DOM (plain unstyled <li> elements with no class
-    // or id at all) - opening the menu only toggles inline `display` styles
-    // on them, it doesn't create/destroy anything. Dispatched (synthetic)
-    // click events reach an element's listeners regardless of whether it is
-    // currently visible, so the rows can be clicked directly by matching
-    // their text - there is no need to ever find or open the settings/gear
-    // button itself. Everything here fails silently if it can't find a
-    // matching row - the direct playbackRate assignment above still
-    // guarantees the speed itself always works either way.
+    // Inspecting Rumble's actual player (2026-10) showed the Speed/Quality
+    // rows do NOT exist until the settings overlay is opened: opening the
+    // gear menu creates them (321 <li> elements on a watch page with the
+    // menu closed, 337 with it open - the delta is exactly the 16 menu
+    // rows), and closing it destroys them again. The old assumption that
+    // the rows always exist and opening the menu only toggles `display`
+    // no longer holds. The sync therefore briefly opens the settings
+    // overlay, clicks the matching rows while the panel is hidden from the
+    // user (visibility: hidden on the panel element, its inline styles
+    // saved and restored afterwards - dispatched synthetic clicks reach
+    // listeners regardless of visibility), and closes it again. Every row
+    // carries its own <svg> icon, so row svg-presence is NOT a marker of
+    // the selected row; the applied values are read from the section
+    // headers instead ("Speed 2×", "Quality 6.1 mbps"), which exist only
+    // while the menu is open too. Everything here fails silently if it
+    // can't find a matching row or the gear button - the direct
+    // playbackRate assignment above still guarantees the speed itself
+    // always works either way.
 
     // Toggle this to see step-by-step logs of the native-menu automation in
     // the page's DevTools console (prefixed "[Rumble Accelerator]") - useful
@@ -160,29 +168,62 @@
         });
     }
 
-    // Rumble prefixes the currently selected row with a checkmark icon
-    // rendered as its own <span>/<svg> (no text), so no visible-text
-    // stripping is actually needed, but trimming is kept defensively.
+    // Menu rows are matched by their text; trimming is kept defensively even
+    // though the rows currently carry no extra visible text around the label.
     function normalizeMenuText(raw) {
         return (raw || "").trim();
     }
 
+    // The settings rows live inside whichever container currently holds the
+    // player: #videoPlayer normally, #theaterVideoPlayer in theater mode
+    // (theater relocates the player across). Search both, falling back to the
+    // whole document if neither container exists.
+    function menuLiScopes() {
+        var scopes = [];
+        var vp = document.getElementById("videoPlayer");
+        var tp = document.getElementById("theaterVideoPlayer");
+        if (vp) scopes.push(vp);
+        if (tp) scopes.push(tp);
+        if (!scopes.length) scopes.push(document);
+        return scopes;
+    }
+
     function extractMenuCandidates(pattern) {
-        var scope = document.getElementById("videoPlayer") || document;
-        var nodes = scope.querySelectorAll("li");
+        var scopes = menuLiScopes();
+        var seen = new Set();
         var results = [];
-        for (var i = 0; i < nodes.length; i++) {
-            var el = nodes[i];
-            var text = normalizeMenuText(el.textContent);
-            if (el.children.length <= 3 && pattern.test(text)) {
-                results.push({ el: el, text: text });
+
+        for (var s = 0; s < scopes.length; s++) {
+            var nodes = scopes[s].querySelectorAll("li");
+            for (var i = 0; i < nodes.length; i++) {
+                var el = nodes[i];
+                if (seen.has(el)) continue;
+                seen.add(el);
+                var text = normalizeMenuText(el.textContent);
+                if (el.children.length <= 3 && pattern.test(text)) {
+                    results.push({ el: el, text: text });
+                }
+            }
+        }
+
+        // Fallback: neither player container had a matching row - scan the
+        // whole document once before giving up.
+        if (!results.length) {
+            var all = document.querySelectorAll("li");
+            for (var j = 0; j < all.length; j++) {
+                var e2 = all[j];
+                if (seen.has(e2)) continue;
+                seen.add(e2);
+                var t2 = normalizeMenuText(e2.textContent);
+                if (e2.children.length <= 3 && pattern.test(t2)) {
+                    results.push({ el: e2, text: t2 });
+                }
             }
         }
         return results;
     }
 
     var SPEED_ITEM_PATTERN = /^(normal|\d+(?:[.,]\d+)?\s*[x×])$/i;
-
     // Rumble's quality menu lists rows like "auto", "1280x720, 2.1 mbps" or
     // "640x360, 220 kbps" - not "720p" as one might expect, so entries are
     // matched by that WIDTHxHEIGHT, BITRATE UNIT shape (confirmed by
@@ -270,60 +311,327 @@
         return best.el;
     }
 
-    var MENU_KIND_CONFIG = {
-        speed: {
-            pattern: SPEED_ITEM_PATTERN,
-            pick: pickClosestSpeedElement
-        },
-        quality: {
-            pattern: QUALITY_ITEM_PATTERN,
-            pick: pickTargetQualityElement
-        }
-    };
+    // The settings/gear button. The settings area is classed
+    // .touched_overlay_item, but the gear itself is a <div> (NOT a <button>)
+    // carrying title="Playback settings" - confirmed from production markup.
+    // The <button>-based selectors below are kept as fallbacks only.
+    var SETTINGS_BUTTON_SELECTORS = [
+        'div[title="Playback settings" i]',
+        'div[title*="settings" i]',
+        '[aria-label*="settings" i]',
+        '.touched_overlay_item button',
+        '.touched_overlay_item + div button'
+    ];
 
-    function applyViaNativeMenu(kind, preference, attempt, done) {
+    function findSettingsButton() {
+        for (var i = 0; i < SETTINGS_BUTTON_SELECTORS.length; i++) {
+            try {
+                var el = document.querySelector(SETTINGS_BUTTON_SELECTORS[i]);
+                if (el) return el;
+            } catch (e) {}
+        }
+        return null;
+    }
+
+    // Rumble wires the settings toggle on the gear's INNER icon-wrapper div,
+    // not on the outer div carrying the title attribute - a click dispatched
+    // on the outer div never reaches it, because events bubble upward only.
+    // So the click is dispatched on the innermost <svg> instead: bubbling then
+    // passes through the icon wrapper (where the handler lives) and every
+    // ancestor, making it work no matter which level the handler sits at.
+    function gearClickTarget(gear) {
+        if (!gear) return null;
+        try {
+            var svg = gear.querySelector("svg");
+            if (svg) return svg;
+        } catch (e) {}
+        return gear.children && gear.children[0] ? gear.children[0] : gear;
+    }
+
+    // The settings panel is the gear's child with inline position: absolute.
+    // It is empty (display: none) when closed and holds the <li> rows when
+    // open, so it can be found and hidden before the gear is ever clicked.
+    function findSettingsPanels(gear) {
+        var out = [];
+        if (!gear || !gear.children) return out;
+        for (var i = 0; i < gear.children.length; i++) {
+            var child = gear.children[i];
+            if (child && child.tagName === "DIV" && child.style && child.style.position === "absolute") {
+                out.push(child);
+            }
+        }
+        return out;
+    }
+
+    // While the menu is open, its section headers carry the currently applied
+    // values: "Speed 2×" / "Speed Normal" and "Quality 6.1 mbps" /
+    // "Quality 200 kbps" ("Quality auto" in adaptive mode). Reading them is
+    // the only reliable way to know the player's current state, because every
+    // row carries its own <svg> icon (so svg-presence is not a marker).
+    function findMenuHeader(kind) {
+        var re = kind === "speed" ? /^speed\b/i : /^quality\b/i;
+        var scopes = menuLiScopes();
+        for (var s = 0; s < scopes.length; s++) {
+            var nodes = scopes[s].querySelectorAll("li");
+            for (var i = 0; i < nodes.length; i++) {
+                var text = normalizeMenuText(nodes[i].textContent);
+                if (re.test(text) && text.length <= 30) return nodes[i];
+            }
+        }
+        return null;
+    }
+
+    function parseHeaderValue(kind, text) {
+        var value = text.replace(/^(speed|quality)\b\s*/i, "").trim();
+        if (kind === "speed") {
+            if (/^normal$/i.test(value)) return 1;
+            var s = parseFloat(value.replace(",", ".").replace(/[x×]/gi, ""));
+            return isNaN(s) ? null : s;
+        }
+        if (/^auto$/i.test(value)) return null; // player is in adaptive mode
+        var m = value.match(/^([\d.,]+)\s*(mbps|kbps)$/i);
+        if (!m) return null;
+        var rate = parseFloat(m[1].replace(",", "."));
+        return /^m/i.test(m[2]) ? rate * 1000 : rate;
+    }
+
+    // "Is the menu already showing what the settings ask for?" Returns
+    // true (correct), false (drifted - a click is needed) or null (cannot
+    // verify - e.g. the header is missing or unreadable; apply anyway).
+    function speedMenuMatches() {
+        var header = findMenuHeader("speed");
+        if (!header) return null;
+        var current = parseHeaderValue("speed", normalizeMenuText(header.textContent));
+        if (current === null) return null;
+        return Math.abs(current - Number(currentSettings.speed)) < 0.001;
+    }
+
+    function qualityMenuMatches(pickedEl) {
+        if (currentSettings.resolution === "auto") return true; // not driven at all
+        var header = findMenuHeader("quality");
+        if (!header) return null;
+        var current = parseHeaderValue("quality", normalizeMenuText(header.textContent));
+        if (current === null) return null;
+        var info = pickedEl ? parseQualityCandidate(normalizeMenuText(pickedEl.textContent)) : null;
+        if (!info || info.isAuto) return null;
+        return Math.abs(current - info.bitrateKbps) < 1;
+    }
+
+    // Clicks the rows matching the current settings, skipping any whose header
+    // already shows the requested value - a redundant quality click makes
+    // Rumble reload the stream for nothing.
+    function clickDesiredRows(speedCandidates, qualityCandidates) {
+        if (currentSettings.playbackEnabled !== false && speedCandidates.length) {
+            var speedEl = pickClosestSpeedElement(speedCandidates, currentSettings.speed);
+            if (speedEl && speedMenuMatches() !== true) simulateClick(speedEl);
+        }
+        if (currentSettings.resolution !== "auto" && qualityCandidates.length) {
+            var qualityEl = pickTargetQualityElement(qualityCandidates, currentSettings.resolution);
+            if (qualityEl && qualityMenuMatches(qualityEl) !== true) simulateClick(qualityEl);
+        }
+    }
+
+    var menuSyncBusy = false;
+    // Set once the primary hidden sync has completed (successfully or not);
+    // the heal path only corrects quality after that, so opening the menu
+    // early never triggers the stream reload the primary sync would cause.
+    var menuSyncDone = false;
+
+    // Applies the current settings to Rumble's Speed/Quality menu. The rows
+    // only exist while the menu is open, so this opens the settings overlay,
+    // waits for the rows (retrying while they mount), clicks the matching
+    // rows while the panel is hidden from the user (visibility: hidden on the
+    // panel element, its inline styles saved and restored afterwards - the
+    // rows are created with display: block but the panel is kept invisible
+    // the whole time, and dispatched synthetic clicks reach listeners
+    // regardless of visibility), and closes the overlay again. Because a row
+    // click can make Rumble close the overlay on its own, the dance reopens
+    // it between rows when that happens, so both rows are always applied.
+    // If the menu is already open (the user opened it), the rows are corrected
+    // directly and left visibly in sync. Fails silently.
+    function syncSettingsMenu(video, attempt) {
         attempt = attempt || 0;
-        var config = MENU_KIND_CONFIG[kind];
-        if (!config || attempt > 6) {
-            debugLog(kind, "gave up after", attempt, "attempts");
-            done();
+        if (menuSyncBusy) return;
+        menuSyncBusy = true;
+
+        // Menu already open? Correct it in place - the user is looking at it.
+        var speedCandidates = extractMenuCandidates(SPEED_ITEM_PATTERN);
+        var qualityCandidates = extractMenuCandidates(QUALITY_ITEM_PATTERN);
+        if (speedCandidates.length || qualityCandidates.length) {
+            clickDesiredRows(speedCandidates, qualityCandidates);
+            menuSyncBusy = false;
             return;
         }
 
-        var candidates = extractMenuCandidates(config.pattern);
-        if (!candidates.length) {
-            debugLog(kind, "no menu rows found yet (attempt " + attempt + "), retrying...");
-            setTimeout(function () { applyViaNativeMenu(kind, preference, attempt + 1, done); }, 500);
+        var gear = findSettingsButton();
+        if (!gear) {
+            menuSyncBusy = false;
+            if (attempt < 8) {
+                debugLog("menu: settings button not found yet (attempt " + attempt + "), retrying...");
+                setTimeout(function () { syncSettingsMenu(video, attempt + 1); }, 700);
+            } else {
+                debugLog("menu: settings button not found after retries, giving up");
+                menuSyncDone = true;
+            }
             return;
         }
 
-        debugLog(kind, "candidates:", candidates.map(function (c) { return c.text; }));
-        var target = config.pick(candidates, preference);
-        debugLog(kind, "target picked for preference '" + preference + "':", target ? target.textContent.trim() : "NONE");
-        if (target) simulateClick(target);
-        done();
+        var panels = findSettingsPanels(gear);
+        var videoWasPlaying = !!(video && !video.paused);
+        // The dance only runs when the menu was closed, so any open overlay is
+        // ours - confirmed as soon as its rows appear.
+        var openedByUs = false;
+        var savedStyles = [];
+        var pendingSpeed = currentSettings.playbackEnabled !== false;
+        var pendingQuality = currentSettings.resolution !== "auto";
+        function hidePanels() {
+            for (var i = 0; i < panels.length; i++) {
+                savedStyles.push({ el: panels[i], cssText: panels[i].style.cssText });
+                panels[i].style.visibility = "hidden";
+            }
+        }
+        function restorePanels() {
+            while (savedStyles.length) {
+                var rec = savedStyles.pop();
+                rec.el.style.cssText = rec.cssText;
+            }
+        }
+
+        function finish() {
+            try {
+                // Make sure the menu ends closed - only if we opened it and it
+                // is still open.
+                if (openedByUs) {
+                    var s = extractMenuCandidates(SPEED_ITEM_PATTERN);
+                    var q = extractMenuCandidates(QUALITY_ITEM_PATTERN);
+                    if (s.length || q.length) simulateClick(gearClickTarget(gear));
+                }
+            } finally {
+                restorePanels();
+                if (videoWasPlaying && video && video.paused) {
+                    try { video.play(); } catch (e) {}
+                }
+                // The primary sync had its chance - heal may now correct any
+                // drift the user sees with the menu open.
+                menuSyncDone = true;
+                menuSyncBusy = false;
+            }
+        }
+
+        try {
+            hidePanels();
+            simulateClick(gearClickTarget(gear));
+        } catch (e) {
+            debugLog("menu: failed to open overlay", e);
+            restorePanels();
+            menuSyncBusy = false;
+            return;
+        }
+
+        // The rows are built asynchronously after the overlay opens. The speed
+        // rows appear immediately, but the quality rows only exist once the
+        // video has loaded a rendition (in a fresh page they are simply
+        // missing), so each pending kind is retried - not consumed - until its
+        // target row actually exists. Bounded to a few seconds either way.
+        var openAttempt = 0;
+        (function step() {
+            setTimeout(function () {
+                try {
+                    var s = extractMenuCandidates(SPEED_ITEM_PATTERN);
+                    var q = extractMenuCandidates(QUALITY_ITEM_PATTERN);
+
+                    if (s.length || q.length) {
+                        // Menu is open. Apply the next pending kind whose
+                        // target row exists; keep waiting for the other.
+                        openedByUs = true;
+                        if (pendingSpeed) {
+                            var speedEl = pickClosestSpeedElement(s, currentSettings.speed);
+                            if (speedEl) {
+                                pendingSpeed = false;
+                                if (speedMenuMatches() !== true) simulateClick(speedEl);
+                            } else {
+                                debugLog("menu: speed rows missing unexpectedly");
+                                pendingSpeed = false;
+                            }
+                            setTimeout(step, 300);
+                            return;
+                        }
+                        if (pendingQuality) {
+                            var qualityEl = pickTargetQualityElement(q, currentSettings.resolution);
+                            if (qualityEl) {
+                                pendingQuality = false;
+                                if (qualityMenuMatches(qualityEl) !== true) simulateClick(qualityEl);
+                                setTimeout(step, 300);
+                                return;
+                            }
+                            // Quality rows not rendered yet (video still
+                            // loading) - keep the (hidden) menu open and wait.
+                            if (++openAttempt > 10) {
+                                debugLog("menu: quality rows never appeared, giving up");
+                                finish();
+                                return;
+                            }
+                            setTimeout(step, 500);
+                            return;
+                        }
+                        finish();
+                        return;
+                    }
+
+                    // No rows at all - the overlay hasn't opened (or a row
+                    // click auto-closed it). Reopen while kinds are pending.
+                    if (pendingSpeed || pendingQuality) {
+                        openAttempt++;
+                        if (openAttempt > 6) {
+                            debugLog("menu: overlay did not open, giving up");
+                            finish();
+                            return;
+                        }
+                        simulateClick(gearClickTarget(gear));
+                        debugLog("menu: reopening overlay (attempt " + openAttempt + ")");
+                        setTimeout(step, 400);
+                        return;
+                    }
+
+                    finish();
+                } catch (e) {
+                    debugLog("menu: unexpected error", e);
+                    finish();
+                }
+            }, 400);
+        })();
     }
 
-    var menuTaskQueue = [];
-    var processingMenuTask = false;
+    // While the user has the menu open, re-apply drifted values in place.
+    // Rate-limited: the observer tick runs this roughly every 400ms while the
+    // video plays, and repeated quality clicks would reload the stream each
+    // time. With the menu closed there is nothing to verify (the rows and the
+    // headers do not exist), so this is a no-op then - the hidden sync above
+    // is what applies the settings. Quality is only corrected here after the
+    // primary sync has already had its chance, so the user opening the menu
+    // early never triggers the stream reload the primary sync would cause.
+    var lastMenuHealAt = 0;
+    function healMenuIfOpen() {
+        var now = Date.now();
+        if (now - lastMenuHealAt < 1500) return;
 
-    function processNextMenuTask() {
-        if (processingMenuTask || !menuTaskQueue.length) return;
-        processingMenuTask = true;
-        var task = menuTaskQueue.shift();
-        applyViaNativeMenu(task.kind, task.preference, 0, function () {
-            processingMenuTask = false;
-            processNextMenuTask();
-        });
-    }
+        var speedCandidates = extractMenuCandidates(SPEED_ITEM_PATTERN);
+        var qualityCandidates = extractMenuCandidates(QUALITY_ITEM_PATTERN);
+        if (!speedCandidates.length && !qualityCandidates.length) return; // menu closed
 
-    function queueMenuTask(kind, preference) {
-        menuTaskQueue.push({ kind: kind, preference: preference });
-        processNextMenuTask();
+        lastMenuHealAt = now;
+        if (currentSettings.playbackEnabled !== false && speedCandidates.length) {
+            var speedEl = pickClosestSpeedElement(speedCandidates, currentSettings.speed);
+            if (speedEl && speedMenuMatches() !== true) simulateClick(speedEl);
+        }
+        if (menuSyncDone && currentSettings.resolution !== "auto" && qualityCandidates.length) {
+            var qualityEl = pickTargetQualityElement(qualityCandidates, currentSettings.resolution);
+            if (qualityEl && qualityMenuMatches(qualityEl) !== true) simulateClick(qualityEl);
+        }
     }
 
     function settingsSignature(settings) {
-        return settings.playbackEnabled + "|" + settings.speed + "|" + settings.volume + "|" + settings.resolution;
+        return settings.playbackEnabled + "|" + settings.speed + "|" + settings.volume + "|" + settings.resolution + "|" + settings.playerMode;
     }
 
     // --- Download button -------------------------------------------------
@@ -548,23 +856,83 @@
         updateAllDownloadButtonsState();
     }
 
-    function handleVideoReady(video) {
+    // --- Player mode (standard / theater / fullscreen) ---------------------
+    // Rumble already renders its own buttons for these modes, so this follows
+    // the same "find the on-page control and click it" approach used for speed
+    // and resolution - nothing is injected into the page. Theater mode is just
+    // a CSS class on <body> toggled by Rumble's own button, so it needs no
+    // user gesture; entering fullscreen does, so that path is only attempted
+    // from the `play` event (see the wiring below).
+    var THEATER_BUTTON_SELECTOR =
+        '[title="Toggle theater mode" i], [data-js="theater-mode-toggle"], ' +
+        'button[title*="theater" i], button[aria-label*="theater" i]';
+    function findTheaterButton() {
+        try { return document.querySelector(THEATER_BUTTON_SELECTOR); } catch (e) { return null; }
+    }
+
+    function isTheaterModeActive() {
+        return !!(document.body && document.body.classList.contains("theater-mode"));
+    }
+
+    function applyPlayerMode(video, userGesture) {
+        var mode = (currentSettings && currentSettings.playerMode) || "standard";
+        if (mode === "theater") {
+            if (!isTheaterModeActive()) {
+                var tbtn = findTheaterButton();
+                if (tbtn) simulateClick(tbtn);
+            }
+        } else if (mode === "fullscreen") {
+            if (userGesture && video && !document.fullscreenElement) {
+                var target = (video.parentElement && typeof video.parentElement.requestFullscreen === "function")
+                    ? video.parentElement : video;
+                try { target.requestFullscreen(); } catch (e) { debugLog("fullscreen failed", e); }
+            }
+        } else {
+            // standard: tear down any active mode
+            if (isTheaterModeActive()) {
+                var tbtn2 = findTheaterButton();
+                if (tbtn2) simulateClick(tbtn2);
+            }
+            if (document.fullscreenElement && document.exitFullscreen) {
+                try { document.exitFullscreen(); } catch (e) { debugLog("exit fullscreen failed", e); }
+            }
+        }
+    }
+
+    function handleVideoReady(video, userGesture) {
         applySpeed(video);
         applyVolume(video);
         insertOrUpdateBadge();
         insertDownloadButtons();
+        applyPlayerMode(video, !!userGesture);
 
         var srcKey = video.currentSrc || video.src || "";
         var signature = srcKey + "::" + settingsSignature(currentSettings);
         if (video.dataset.rumbleSyncedFor !== signature) {
             video.dataset.rumbleSyncedFor = signature;
-            debugLog("queuing sync for settings", currentSettings);
-            if (currentSettings.playbackEnabled) {
-                queueMenuTask("speed", currentSettings.speed);
+            debugLog("syncing menu for settings", currentSettings);
+            syncSettingsMenu(video);
+
+            // In theater mode the player is relocated as the layout switches,
+            // and the theater button itself mounts late (the player is built
+            // async), so theater may only switch on after the sync above.
+            // Re-run the same sync once more, after the transition settles.
+            if ((currentSettings.playerMode || "standard") === "theater") {
+                (function (sig) {
+                    setTimeout(function () {
+                        if (video.dataset.rumbleSyncedFor !== sig) return;
+                        if (!isTheaterModeActive()) return;
+                        syncSettingsMenu(video);
+                    }, 1200);
+                })(signature);
             }
-            if (currentSettings.resolution !== "auto") {
-                queueMenuTask("quality", currentSettings.resolution);
-            }
+        } else {
+            // Same signature as the last sync. Rumble re-renders its player
+            // (theater transition, settings overlay) and can discard the rows
+            // that were clicked - that is why the gear menu used to keep
+            // showing 1x/Auto until the user opened it and triggered a
+            // restart. If the menu is open right now, correct it in place.
+            healMenuIfOpen();
         }
     }
 
@@ -575,7 +943,7 @@
     // later on, instead of binding only to the video present at load time.
     document.addEventListener("play", function (event) {
         if (event.target && event.target.tagName === "VIDEO") {
-            handleVideoReady(event.target);
+            handleVideoReady(event.target, true);
         }
     }, true);
 
@@ -620,6 +988,8 @@
         if (video) {
             applySpeed(video);
             applyVolume(video);
+            applyPlayerMode(video, false);
+            syncSettingsMenu(video);
         }
     });
 })();

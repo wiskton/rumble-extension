@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("label-speed").textContent = chrome.i18n.getMessage("speedLabel");
     document.getElementById("label-volume").textContent = chrome.i18n.getMessage("volumeLabel");
     document.getElementById("label-resolution").textContent = chrome.i18n.getMessage("resolutionLabel");
+    document.getElementById("label-player-mode").textContent = chrome.i18n.getMessage("playerModeLabel");
     document.getElementById("btsend").textContent = chrome.i18n.getMessage("saveButton");
     document.getElementById("footer-heart").textContent = chrome.i18n.getMessage("footerHeart");
     document.getElementById("footer-support-label").textContent = chrome.i18n.getMessage("footerSupportLabel");
@@ -20,6 +21,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var volumeSlider = document.getElementById("rumble_volume");
     var volumeValueInput = document.getElementById("rumble_volume_value");
     var resolutionSelect = document.getElementById("rumble_resolution");
+    var playerModeSelect = document.getElementById("rumble_player_mode");
     var savedMessage = document.getElementById("saved-message");
     var savedMessageTimeoutId = null;
 
@@ -31,6 +33,15 @@ document.addEventListener("DOMContentLoaded", function () {
             case "highest": return chrome.i18n.getMessage("resolutionHighest");
             case "lowest": return chrome.i18n.getMessage("resolutionLowest");
             default: return value + "p";
+        }
+    }
+
+    function playerModeOptionLabel(value) {
+        switch (value) {
+            case "standard": return chrome.i18n.getMessage("playerModeStandard");
+            case "theater": return chrome.i18n.getMessage("playerModeTheater");
+            case "fullscreen": return chrome.i18n.getMessage("playerModeFullscreen");
+            default: return value;
         }
     }
 
@@ -90,6 +101,14 @@ document.addEventListener("DOMContentLoaded", function () {
             if (value === settings.resolution) option.selected = true;
             resolutionSelect.appendChild(option);
         });
+
+        RUMBLE_PLAYER_MODE_OPTIONS.forEach(function (value) {
+            var option = document.createElement("option");
+            option.value = value;
+            option.textContent = playerModeOptionLabel(value);
+            if (value === settings.playerMode) option.selected = true;
+            playerModeSelect.appendChild(option);
+        });
     });
 
     document.getElementById("btsend").addEventListener("click", function () {
@@ -97,7 +116,8 @@ document.addEventListener("DOMContentLoaded", function () {
             speed: parsePairValue(speedValueInput, 1, 0, 10),
             volume: parsePairValue(volumeValueInput, 100, 0, 300),
             playbackEnabled: playbackEnabledToggle.checked,
-            resolution: resolutionSelect.value
+            resolution: resolutionSelect.value,
+            playerMode: playerModeSelect.value
         };
 
         rumbleSaveSettings(settings, function () {
