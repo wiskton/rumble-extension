@@ -8,13 +8,16 @@ var RUMBLE_DEFAULT_SETTINGS = {
     speed: 1,
     volume: 100,
     playbackEnabled: true,
-    resolution: "auto"
+    resolution: "auto",
+    playerMode: "standard"
 };
 
 // "auto"/"highest"/"lowest" are relative to whatever qualities Rumble
 // actually offers for a given video; the numeric entries are common target
 // heights that get matched to the closest quality the player exposes.
 var RUMBLE_RESOLUTION_OPTIONS = ["auto", "highest", "1080", "720", "480", "360", "240", "lowest"];
+
+var RUMBLE_PLAYER_MODE_OPTIONS = ["standard", "theater", "fullscreen"];
 
 // Wraps chrome.storage.local.get and migrates the legacy single-value
 // "key" entry (just a speed number) to the new settings object.
